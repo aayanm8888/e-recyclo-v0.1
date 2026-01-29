@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Dashboard - E-RECYCLO{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 0.5rem;">Welcome, {{ user.first_name }}! 👋</h1>
+<p style="color: #718096; margin-bottom: 2rem;">Manage your e-waste recycling from here.</p>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="stat-card">
+        <div class="stat-value">₹{{ user.wallet_balance }}</div>
+        <div class="stat-label">Wallet Balance</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ user.loyalty_points }}</div>
+        <div class="stat-label">Loyalty Points</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_products }}</div>
+        <div class="stat-label">Total Items</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ recycled_count }}</div>
+        <div class="stat-label">Recycled</div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2>Your Recent Items</h2>
+        <a href="{% url 'upload_product' %}" class="btn">+ Upload New Item</a>
+    </div>
+    
+    {% if products %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc;">
+                <th style="padding: 1rem; text-align: left;">Item</th>
+                <th style="padding: 1rem; text-align: left;">Status</th>
+                <th style="padding: 1rem; text-align: left;">Date</th>
+                <th style="padding: 1rem; text-align: left;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">{{ product.category|default:"Pending" }}</td>
+                <td style="padding: 1rem;">
+                    <span style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem;">
+                        {{ product.get_status_display }}
+                    </span>
+                </td>
+                <td style="padding: 1rem;">{{ product.uploaded_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'product_detail' product.id %}" style="color: #667eea;">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #718096; padding: 2rem;">
+        No items uploaded yet. <a href="{% url 'upload_product' %}" style="color: #667eea;">Upload your first item</a>
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

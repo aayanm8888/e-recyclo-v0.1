@@ -1,0 +1,32 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Evaluate Product - E-RECYCLO{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto;">
+    <h2>Evaluate Product</h2>
+    <p>Product: {{ product.category }}</p>
+    <p>Customer: {{ product.customer.get_full_name }}</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Condition Score (0-100)</label>
+            <input type="number" name="declared_condition" class="form-control" min="0" max="100" required>
+        </div>
+        <div class="form-group">
+            <label>Estimated Value (₹)</label>
+            <input type="number" name="estimated_value" class="form-control" min="0" required>
+        </div>
+        <div class="form-group">
+            <label>Recyclable</label>
+            <input type="checkbox" name="is_recyclable" checked>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea name="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn">Submit Evaluation</button>
+    </form>
+</div>
+{% endblock %}

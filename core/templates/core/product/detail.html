@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Product Details - E-RECYCLO{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Product Details</h2>
+    <p><strong>ID:</strong> {{ product.id }}</p>
+    <p><strong>Category:</strong> {{ product.category|default:"Not classified yet" }}</p>
+    <p><strong>Status:</strong> {{ product.get_status_display }}</p>
+    <p><strong>Uploaded:</strong> {{ product.uploaded_at }}</p>
+    
+    {% if product.image %}
+    <img src="{{ product.image.url }}" style="max-width: 300px; margin-top: 1rem;">
+    {% endif %}
+</div>
+{% endblock %}

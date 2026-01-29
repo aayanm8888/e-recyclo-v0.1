@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block title %}E-RECYCLO - AI Powered E-Waste Management{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 3rem 0;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #2d3748;">♻️ E-RECYCLO</h1>
+    <p style="font-size: 1.25rem; color: #718096; margin-bottom: 2rem;">
+        AI-Powered E-Waste Management Platform<br>
+        Turn your e-waste into rewards. Responsible recycling made easy.
+    </p>
+    
+    {% if not user.is_authenticated %}
+    <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- CUSTOMER -->
+        <a href="{% url 'register_user' %}" class="btn" style="padding: 15px 30px; font-size: 18px; min-width: 200px;">
+            <div>👤 Start Recycling</div>
+            <small style="font-size: 0.7rem; opacity: 0.9;">Register as Customer</small>
+        </a>
+        
+        <!-- VENDOR -->
+        <a href="{% url 'register_vendor' %}" class="btn btn-secondary" style="padding: 15px 30px; font-size: 18px; min-width: 200px; background: #48bb78;">
+            <div>🏪 Join as Vendor</div>
+            <small style="font-size: 0.7rem; opacity: 0.9;">Recycle Center</small>
+        </a>
+        
+        <!-- COLLECTOR -->
+        <a href="{% url 'register_collector' %}" class="btn" style="padding: 15px 30px; font-size: 18px; min-width: 200px; background: #ed8936;">
+            <div>🚚 Become Collector</div>
+            <small style="font-size: 0.7rem; opacity: 0.9;">Pickup Agent</small>
+        </a>
+    </div>
+    
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+        <p style="color: #718096; margin-bottom: 1rem;">Already have an account?</p>
+        <div style="display: flex; justify-content: center; gap: 1rem;">
+            <a href="{% url 'login_customer' %}" style="color: #667eea; text-decoration: none; font-weight: 600;">Customer Login</a>
+            <span style="color: #cbd5e0;">|</span>
+            <a href="{% url 'login_vendor' %}" style="color: #48bb78; text-decoration: none; font-weight: 600;">Vendor Login</a>
+            <span style="color: #cbd5e0;">|</span>
+            <a href="{% url 'login_collector' %}" style="color: #ed8936; text-decoration: none; font-weight: 600;">Collector Login</a>
+        </div>
+    </div>
+    
+    <div class="grid" style="margin-top: 4rem; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #667eea; margin-bottom: 0.5rem;">📸 AI Classification</h3>
+            <p style="color: #718096; font-size: 0.95rem;">Upload photo of your e-waste. Our AI identifies the item and condition instantly.</p>
+        </div>
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #667eea; margin-bottom: 0.5rem;">🚚 Doorstep Pickup</h3>
+            <p style="color: #718096; font-size: 0.95rem;">Verified collectors pick up from your location at your convenience.</p>
+        </div>
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #667eea; margin-bottom: 0.5rem;">💰 Instant Rewards</h3>
+            <p style="color: #718096; font-size: 0.95rem;">Get paid instantly to your wallet. Earn loyalty points for every recycle.</p>
+        </div>
+    </div>
+    {% else %}
+    <!-- If user IS already logged in, show Dashboard button -->
+    <div style="margin-top: 2rem;">
+        <p style="color: #718096; margin-bottom: 1rem;">Welcome back, {{ user.first_name }}!</p>
+        {% if user.user_type == 'vendor' %}
+            <a href="{% url 'vendor_dashboard' %}" class="btn" style="padding: 15px 40px; font-size: 18px;">Go to Vendor Dashboard</a>
+        {% elif user.user_type == 'collector' %}
+            <a href="{% url 'collector_dashboard' %}" class="btn" style="padding: 15px 40px; font-size: 18px;">Go to Collector Dashboard</a>
+        {% else %}
+            <a href="{% url 'user_dashboard' %}" class="btn" style="padding: 15px 40px; font-size: 18px;">Go to My Dashboard</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

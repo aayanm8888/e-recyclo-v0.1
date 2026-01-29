@@ -1,0 +1,48 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Upload Product - E-RECYCLO{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Upload E-Waste Item</h2>
+    
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Take Photo of Item</label>
+            <input type="file" name="image" class="form-control" accept="image/*" capture="environment" required>
+            <small style="color: #718096;">Use your camera to capture the e-waste item clearly</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Pickup Address</label>
+            <textarea name="address" class="form-control" rows="3" required></textarea>
+        </div>
+        
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        
+        <div id="location-status" style="margin-bottom: 1rem; color: #718096;">
+            📍 Getting your location...
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;">Upload Item</button>
+    </form>
+</div>
+
+<script>
+// Get GPS coordinates
+if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('latitude').value = position.coords.latitude;
+        document.getElementById('longitude').value = position.coords.longitude;
+        document.getElementById('location-status').innerHTML = '✅ Location captured';
+    }, function(error) {
+        document.getElementById('location-status').innerHTML = '⚠️ Could not get location. Please enable GPS.';
+    });
+} else {
+    document.getElementById('location-status').innerHTML = '⚠️ Geolocation not supported';
+}
+</script>
+{% endblock %}

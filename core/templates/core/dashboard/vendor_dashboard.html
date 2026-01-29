@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Vendor Dashboard - E-RECYCLO{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 0.5rem;">Vendor Dashboard</h1>
+<p style="color: #718096; margin-bottom: 2rem;">{{ vendor.company_name }}</p>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="stat-card">
+        <div class="stat-value">{{ vendor.rating }} ⭐</div>
+        <div class="stat-label">Rating</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ vendor.total_recycled }}</div>
+        <div class="stat-label">Items Processed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ workload_percentage|floatformat:1 }}%</div>
+        <div class="stat-label">Workload</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ active_pickups }}</div>
+        <div class="stat-label">Active Pickups</div>
+    </div>
+</div>
+
+{% if vendor.verification_status == 'pending' %}
+<div class="alert alert-error">
+    ⚠️ Your account is pending verification. You'll receive notifications once approved.
+</div>
+{% endif %}
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Pending Evaluations</h2>
+    {% if pending_evaluations %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc;">
+                <th style="padding: 1rem; text-align: left;">Item</th>
+                <th style="padding: 1rem; text-align: left;">Received</th>
+                <th style="padding: 1rem; text-align: left;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in pending_evaluations %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">{{ product.category }}</td>
+                <td style="padding: 1rem;">{{ product.delivered_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'vendor_evaluation' product.id %}" class="btn btn-secondary">Evaluate</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #718096; padding: 2rem;">No pending evaluations</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Collector Dashboard - E-RECYCLO{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 0.5rem;">Collector Dashboard</h1>
+<p style="color: #718096; margin-bottom: 2rem;">Welcome back, {{ user.first_name }}</p>
+
+<div style="margin-bottom: 2rem;">
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3>Availability Status</h3>
+            <p style="color: #718096;">
+                {% if collector.is_available %}
+                    ✅ You are available for new pickups
+                {% else %}
+                    ❌ You are currently unavailable
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'toggle_availability' %}" class="btn {% if collector.is_available %}btn-danger{% else %}btn-secondary{% endif %}">
+            {% if collector.is_available %}Go Offline{% else %}Go Online{% endif %}
+        </a>
+    </div>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="stat-card">
+        <div class="stat-value">{{ collector.current_pickups }}/3</div>
+        <div class="stat-label">Current Pickups</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ completed_today }}</div>
+        <div class="stat-label">Completed Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ collector.total_deliveries }}</div>
+        <div class="stat-label">Total Deliveries</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ collector.rating }} ⭐</div>
+        <div class="stat-label">Rating</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Current Pickups</h2>
+    {% if current_pickups %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc;">
+                <th style="padding: 1rem; text-align: left;">Item</th>
+                <th style="padding: 1rem; text-align: left;">Status</th>
+                <th style="padding: 1rem; text-align: left;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in current_pickups %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">{{ product.category }}</td>
+                <td style="padding: 1rem;">{{ product.get_status_display }}</td>
+                <td style="padding: 1rem;">
+                    {% if product.status == 'collector_assigned' %}
+                    <a href="{% url 'mark_picked_up' product.id %}" class="btn btn-secondary">Mark Picked Up</a>
+                    {% elif product.status == 'picked_up' %}
+                    <a href="{% url 'mark_delivered' product.id %}" class="btn">Mark Delivered</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #718096; padding: 2rem;">No active pickups assigned</p>
+    {% endif %}
+</div>
+{% endblock %}

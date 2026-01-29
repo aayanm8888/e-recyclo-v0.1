@@ -1,0 +1,28 @@
+# ===== DJANGO & CORE =====
+Django==4.2.7
+python-decouple==3.8
+Pillow==10.1.0
+
+# ===== AI/ML (Install Later - Week 4) =====
+# ultralytics==8.0.200
+# opencv-python==4.8.1.78
+# numpy==1.24.3
+# onnxruntime==1.16.3
+
+# ===== GEOLOCATION (Needed Now) =====
+geopy==2.4.0
+
+# ===== ASYNC TASKS (Future) =====
+# celery==5.3.4
+# redis==5.0.1
+
+# ===== PAYMENTS (Future) =====
+# razorpay==1.4.1
+
+# ===== SMS/EMAIL (Future) =====
+# twilio==8.10.3
+# sendgrid==6.10.0
+
+# ===== TESTING (Optional) =====
+# pytest==7.4.3
+# pytest-django==4.7.0  
