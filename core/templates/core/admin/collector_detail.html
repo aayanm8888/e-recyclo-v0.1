@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ collector.user.get_full_name }} - Collector Details{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Collector Details</h1>
+    <a href="{% url 'pending_collectors' %}" class="btn btn-secondary" style="margin-top: 0.5rem;">← Back to List</a>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>👤 Personal Information</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Name:</strong> {{ collector.user.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ collector.user.email }}</p>
+            <p><strong>Phone:</strong> {{ collector.user.phone }}</p>
+            <p><strong>Status:</strong> 
+                <span style="background: {% if collector.verification_status == 'approved' %}#c6f6d5{% elif collector.verification_status == 'rejected' %}#fed7d7{% else %}#fefcbf{% endif %}; 
+                             padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.9rem;">
+                    {{ collector.get_verification_status_display }}
+                </span>
+            </p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>🚗 Vehicle Information</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Type:</strong> {{ collector.vehicle_display }}</p>
+            <p><strong>Number:</strong> {{ collector.vehicle_number|default:"<span style='color: #e53e3e;'>Not provided</span>"|safe }}</p>
+            <p><strong>License:</strong> {{ collector.driving_license_number|default:"<span style='color: #e53e3e;'>Not provided</span>"|safe }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>📄 Documents Review</h3>
+    <div class="grid" style="margin-top: 1rem;">
+        <div>
+            <p><strong>Profile Photo:</strong></p>
+            {% if collector.profile_photo %}
+                <a href="{{ collector.profile_photo.url }}" target="_blank" class="btn btn-secondary" style="margin-top: 0.5rem;">View Photo</a>
+            {% else %}
+                <span style="color: #e53e3e;">❌ Missing</span>
+            {% endif %}
+        </div>
+        <div>
+            <p><strong>License Front:</strong></p>
+            {% if collector.driving_license_front %}
+                <a href="{{ collector.driving_license_front.url }}" target="_blank" class="btn btn-secondary" style="margin-top: 0.5rem;">View Front</a>
+            {% else %}
+                <span style="color: #e53e3e;">❌ Missing</span>
+            {% endif %}
+        </div>
+        <div>
+            <p><strong>License Back:</strong></p>
+            {% if collector.driving_license_back %}
+                <a href="{{ collector.driving_license_back.url }}" target="_blank" class="btn btn-secondary" style="margin-top: 0.5rem;">View Back</a>
+            {% else %}
+                <span style="color: #e53e3e;">❌ Missing</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="margin-top: 1.5rem; padding: 1rem; background: #f7fafc; border-radius: 8px;">
+        <strong>Documentation Status:</strong>
+        {% if collector.is_documentation_complete %}
+            <span style="color: #48bb78;">✅ All documents uploaded</span>
+        {% else %}
+            <span style="color: #ed8936;">⚠️ Some documents missing</span>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display: flex; gap: 1rem;">
+    <a href="{% url 'verify_collector' collector.id %}" class="btn" style="background: #667eea;">✅ Proceed to Verification</a>
+    <a href="{% url 'pending_collectors' %}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

@@ -35,6 +35,7 @@ class UserManager(BaseUserManager):
 
         return self._create_user(email, phone, password, **extra_fields)
 
+
 class User(AbstractBaseUser, PermissionsMixin):
     USER_TYPE_CHOICES = [
         ('customer', 'Customer'),
@@ -60,6 +61,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     state = models.CharField(max_length=100, blank=True)
     pincode = models.CharField(max_length=6, blank=True)
     
+    # NEW FIELDS FOR PROFILE
+    date_of_birth = models.DateField(null=True, blank=True)
+    profile_photo = models.ImageField(upload_to='users/photos/%Y/%m/', null=True, blank=True)
+    profile_completion = models.IntegerField(default=0)
+    profile_complete = models.BooleanField(default=False)
+    
     latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     
@@ -69,11 +76,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
-    last_active = models.DateTimeField(auto_now=True)
-    
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
+    
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_active = models.DateTimeField(auto_now=True)
     
     objects = UserManager()
     
@@ -105,3 +112,37 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_customer(self):
         return self.user_type == 'customer'
+    
+    # THIS IS THE CRITICAL METHOD - MUST BE HERE
+    def calculate_profile_completion(self):
+        """Calculate profile completion percentage for customer"""
+        fields = {
+            'profile_photo': 20,
+            'date_of_birth': 20,
+            'address': 20,
+            'city': 10,
+            'state': 10,
+            'pincode': 10,
+            'is_phone_verified': 10,
+        }
+        
+        score = 0
+        if self.profile_photo:
+            score += fields['profile_photo']
+        if self.date_of_birth:
+            score += fields['date_of_birth']
+        if self.address:
+            score += fields['address']
+        if self.city:
+            score += fields['city']
+        if self.state:
+            score += fields['state']
+        if self.pincode:
+            score += fields['pincode']
+        if self.is_phone_verified:
+            score += fields['is_phone_verified']
+        
+        self.profile_completion = min(score, 100)
+        self.profile_complete = self.profile_completion >= 80
+        self.save(update_fields=['profile_completion', 'profile_complete'])
+        return self.profile_completion

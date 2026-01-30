@@ -7,10 +7,19 @@
     <h2 style="text-align: center; margin-bottom: 1rem;">🚚 Register as Collector</h2>
     <p style="text-align: center; color: #718096; margin-bottom: 2rem;">Join our pickup and delivery network</p>
     
-    <form method="post">
+    {% if form.errors %}
+    <div class="alert alert-error">
+        {% for field, errors in form.errors.items %}
+            {{ errors|join:", " }}<br>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         
         <h3 style="margin: 1.5rem 0 1rem 0; color: #ed8936; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">Personal Details</h3>
+        
         <div class="grid" style="gap: 1rem; grid-template-columns: 1fr 1fr;">
             <div class="form-group">
                 <label>First Name *</label>
@@ -28,8 +37,8 @@
         </div>
         
         <div class="form-group">
-            <label>Phone Number *</label>
-            <input type="text" name="phone" class="form-control" required>
+            <label>Phone Number (10 digits) *</label>
+            <input type="text" name="phone" class="form-control" placeholder="9876543210" required>
         </div>
         
         <div class="grid" style="gap: 1rem; grid-template-columns: 1fr 1fr;">
@@ -44,9 +53,11 @@
         </div>
         
         <h3 style="margin: 1.5rem 0 1rem 0; color: #ed8936; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">Vehicle Details</h3>
+        
         <div class="form-group">
             <label>Vehicle Type *</label>
             <select name="vehicle_type" class="form-control" required>
+                <option value="">Select Vehicle</option>
                 <option value="bike">🛵 Motorcycle</option>
                 <option value="bicycle">🚲 Bicycle</option>
                 <option value="van">🚐 Van</option>
@@ -54,15 +65,38 @@
         </div>
         
         <div class="form-group">
-            <label>Driving License Number</label>
-            <input type="text" name="driving_license" class="form-control" placeholder="Required for bike/van">
-            <small style="color: #718096;">Required if selecting Motorcycle or Van</small>
+            <label>Vehicle Number *</label>
+            <input type="text" name="vehicle_number" class="form-control" placeholder="e.g., MH01AB1234">
+            <small style="color: #718096;">Required for Motorcycle/Van</small>
         </div>
         
-        <button type="submit" class="btn" style="width: 100%; margin-top: 1rem; background: #ed8936;">Register as Collector</button>
+        <div class="form-group">
+            <label>Driving License Number</label>
+            <input type="text" name="driving_license_number" class="form-control" placeholder="e.g., MH0120230001234">
+        </div>
+        
+        <h3 style="margin: 1.5rem 0 1rem 0; color: #ed8936; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">Documents *</h3>
+        
+        <div class="form-group">
+            <label>Profile Photo *</label>
+            <input type="file" name="profile_photo" class="form-control" accept="image/*" required>
+            <small style="color: #718096;">Clear passport-size photo</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Driving License (Front) *</label>
+            <input type="file" name="driving_license_front" class="form-control" accept="image/*" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Driving License (Back) *</label>
+            <input type="file" name="driving_license_back" class="form-control" accept="image/*" required>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%; margin-top: 1rem; background: #ed8936; color: white;">Register as Collector</button>
     </form>
     
-    <!-- Role Switcher Links -->
+    <!-- ✅ ADDED: Role Switcher Links -->
     <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
         <p style="color: #718096; font-size: 0.9rem; margin-bottom: 0.5rem;">
             <strong>Not a collector?</strong> Register as:
@@ -75,7 +109,7 @@
     </div>
     
     <!-- Login Link -->
-    <div style="margin-top: 1rem; text-align: center;">
+    <div style="margin-top: 1rem; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
         <p style="color: #718096; font-size: 0.9rem;">
             Already registered? <a href="{% url 'login_collector' %}" style="color: #ed8936; font-weight: 600;">Login here</a>
         </p>

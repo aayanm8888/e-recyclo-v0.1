@@ -3,26 +3,132 @@
 {% block title %}Admin Dashboard - E-RECYCLO{% endblock %}
 
 {% block content %}
-<h1>Admin Dashboard</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Admin Dashboard</h1>
+    <a href="{% url 'admin_analytics' %}" class="btn btn-secondary">📊 View Analytics</a>
+</div>
 
+<!-- Statistics Cards -->
 <div class="grid" style="margin-bottom: 2rem;">
     <div class="stat-card">
-        <div class="stat-value">{{ pending_vendors }}</div>
-        <div class="stat-label">Pending Vendors</div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Total Users</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ flagged_products }}</div>
-        <div class="stat-label">Fraud Flags</div>
+        <div class="stat-value">{{ total_customers }}</div>
+        <div class="stat-label">Customers</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ total_products }}</div>
-        <div class="stat-label">Total Products</div>
+        <div class="stat-value">{{ total_vendors }}</div>
+        <div class="stat-label">Vendors</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_collectors }}</div>
+        <div class="stat-label">Collectors</div>
     </div>
 </div>
 
-<div class="card">
-    <h2>Quick Links</h2>
-    <a href="{% url 'pending_vendors' %}" class="btn">Review Pending Vendors</a>
-    <a href="{% url 'fraud_review' %}" class="btn btn-secondary">Review Fraud Flags</a>
+<!-- Pending Verifications -->
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card" style="border-left: 5px solid #ed8936;">
+        <h3>⚠️ Pending Verifications</h3>
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <div>
+                <p style="font-size: 2rem; font-weight: bold; color: #ed8936;">{{ pending_vendors }}</p>
+                <p>Vendors Awaiting Approval</p>
+                <a href="{% url 'pending_vendors' %}" class="btn btn-secondary" style="margin-top: 0.5rem;">Review Vendors</a>
+            </div>
+            <div style="border-left: 2px solid #e2e8f0; padding-left: 2rem;">
+                <p style="font-size: 2rem; font-weight: bold; color: #667eea;">{{ pending_collectors }}</p>
+                <p>Collectors Awaiting Approval</p>
+                <a href="{% url 'pending_collectors' %}" class="btn" style="margin-top: 0.5rem; background: #667eea;">Review Collectors</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" style="border-left: 5px solid #f56565;">
+        <h3>🚨 Fraud Alerts</h3>
+        <div style="margin-top: 1rem;">
+            <p style="font-size: 2rem; font-weight: bold; color: #f56565;">{{ flagged_products }}</p>
+            <p>Flagged Products Need Review</p>
+            <a href="{% url 'fraud_review' %}" class="btn btn-danger" style="margin-top: 0.5rem;">Review Flags</a>
+        </div>
+    </div>
+</div>
+
+<!-- Product Stats -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>📦 Product Overview</h3>
+    <div class="grid" style="margin-top: 1rem;">
+        <div style="text-align: center;">
+            <p style="font-size: 2rem; font-weight: bold; color: #667eea;">{{ total_products }}</p>
+            <p>Total Products</p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 2rem; font-weight: bold; color: #ed8936;">{{ pending_products }}</p>
+            <p>Pending Classification</p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 2rem; font-weight: bold; color: #48bb78;">{{ recycled_products }}</p>
+            <p>Successfully Recycled</p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 2rem; font-weight: bold; color: #38a169;">₹{{ total_value }}</p>
+            <p>Total Value Processed</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>⚡ Quick Actions</h3>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+        <a href="{% url 'user_list' %}" class="btn">👥 Manage Users</a>
+        <a href="{% url 'admin_product_list' %}" class="btn btn-secondary">📦 View All Products</a>
+        <a href="{% url 'admin_analytics' %}" class="btn" style="background: #9f7aea;">📈 Analytics</a>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="grid">
+    <div class="card">
+        <h3>👤 Recent Users</h3>
+        <table style="width: 100%; margin-top: 1rem;">
+            {% for user in recent_users %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 0.75rem 0;">
+                    <strong>{{ user.get_full_name }}</strong><br>
+                    <small style="color: #718096;">{{ user.email }}</small>
+                </td>
+                <td style="text-align: right;">
+                    <span style="background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 15px; font-size: 0.8rem;">
+                        {{ user.user_type }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'user_list' %}" style="display: block; margin-top: 1rem; text-align: center; color: #667eea;">View All Users</a>
+    </div>
+    
+    <div class="card">
+        <h3>📦 Recent Products</h3>
+        <table style="width: 100%; margin-top: 1rem;">
+            {% for product in recent_products %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 0.75rem 0;">
+                    <strong>{{ product.category|default:"Unknown" }}</strong><br>
+                    <small style="color: #718096;">by {{ product.customer.email }}</small>
+                </td>
+                <td style="text-align: right;">
+                    <span style="background: #c6f6d5; color: #22543d; padding: 0.25rem 0.5rem; border-radius: 15px; font-size: 0.8rem;">
+                        {{ product.status }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'admin_product_list' %}" style="display: block; margin-top: 1rem; text-align: center; color: #667eea;">View All Products</a>
+    </div>
 </div>
 {% endblock %}

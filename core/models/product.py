@@ -1,76 +1,172 @@
-import uuid
 from django.db import models
+import uuid
+from .user import User  # or however you import User
+
+# Category model
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name_plural = "categories"
+    
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
+    """
+    E-Waste product uploaded by sellers for recycling
+    """
     STATUS_CHOICES = [
-        ('pending', 'Pending Classification'),
-        ('classified', 'Classified'),
-        ('vendor_assigned', 'Vendor Assigned'),
-        ('collector_assigned', 'Collector Assigned'),
-        ('picked_up', 'Picked Up'),
-        ('delivered', 'Delivered to Vendor'),
-        ('evaluating', 'Vendor Evaluating'),
+        ('available', 'Available'),
+        ('pending', 'Pending Pickup'),
+        ('picked', 'Picked Up'),
         ('recycled', 'Recycled'),
-        ('disputed', 'Under Dispute'),
     ]
     
-    CATEGORY_CHOICES = [
-        ('smartphone', 'Smartphone'),
-        ('laptop', 'Laptop'),
-        ('tablet', 'Tablet'),
-        ('desktop', 'Desktop PC'),
-        ('battery', 'Battery'),
-        ('monitor', 'Monitor'),
-        ('appliance', 'Appliance'),
-        ('others', 'Others'),
-    ]
-    
+    # Keep UUID as primary key to match old schema
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(
-        'User', 
+    
+    # Product details
+    name = models.CharField(max_length=200, default='Unnamed Product')
+    description = models.TextField(default='No description provided')
+    category = models.ForeignKey(
+        Category, 
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,
+        related_name='products'
+    )
+    
+    # Image
+    product_image = models.ImageField(
+        upload_to='products/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        help_text='Upload product image'
+    )
+    
+    # Weight for pricing/logistics
+    weight_approx = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text='Approximate weight in kg'
+    )
+    
+    # Seller reference (renamed from customer)
+    seller = models.ForeignKey(
+        User, 
         on_delete=models.CASCADE, 
         related_name='products'
     )
     
-    image = models.ImageField(upload_to='product_images/%Y/%m/')
-    pickup_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
-    pickup_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
-    address = models.TextField()
-    
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, blank=True)
-    system_condition_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    ai_confidence = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    
-    assigned_vendor = models.ForeignKey(
-        'Vendor', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='assigned_products'
-    )
-    assigned_collector = models.ForeignKey(
-        'Collector', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='pickups'
+    # Status
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='available'
     )
     
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    
-    system_value_estimate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    final_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    picked_up_at = models.DateTimeField(null=True, blank=True)
-    delivered_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
+    # Timestamps (renamed uploaded_at -> created_at)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'products'
-        ordering = ['-uploaded_at']
-        verbose_name = 'Product'
-        verbose_name_plural = 'Products'
+        ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.category or 'Unknown'} - {self.customer.email}"
+        return f"{self.name} - {self.seller.username}"
+
+
+class PickupRequest(models.Model):
+    """
+    Tracks pickup requests for e-waste products
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('assigned', 'Assigned'),
+        ('in_transit', 'In Transit'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    # Keep bigint for PickupRequest (new table)
+    id = models.AutoField(primary_key=True)
+    
+    # Link to the product (UUID foreign key)
+    product = models.OneToOneField(
+        Product, 
+        on_delete=models.CASCADE,
+        related_name='pickuprequest',
+        help_text='The product to be picked up'
+    )
+    
+    # Seller who requested
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='pickup_requests',
+        limit_choices_to={'user_type': 'seller'},
+        help_text='User who requested the pickup'
+    )
+    
+    # Collector assigned (null until assigned)
+    collector = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_pickups',
+        limit_choices_to={'user_type': 'collector'},
+        help_text='Collector assigned to this pickup'
+    )
+    
+    # Location Fields
+    pickup_location_text = models.CharField(
+        max_length=255,
+        default='Address not provided'
+    )
+    latitude = models.DecimalField(
+        max_digits=10, 
+        decimal_places=8,
+        null=True,
+        blank=True,
+        help_text='Auto-detected latitude'
+    )
+    longitude = models.DecimalField(
+        max_digits=11, 
+        decimal_places=8,
+        null=True,
+        blank=True,
+        help_text='Auto-detected longitude'
+    )
+    
+    # Tracking
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Optional notes
+    seller_notes = models.TextField(blank=True)
+    collector_notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Pickup #{self.id} - {self.product.name}"
+    
+    def get_location_string(self):
+        if self.latitude and self.longitude:
+            return f"{self.pickup_location_text} ({self.latitude}, {self.longitude})"
+        return self.pickup_location_text

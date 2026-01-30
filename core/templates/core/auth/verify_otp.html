@@ -1,0 +1,38 @@
+{% extends 'core/base_auth.html' %}
+
+{% block title %}Verify OTP - E-RECYCLO{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="logo-section">
+        <div class="logo-icon">
+            <span class="material-symbols-outlined">verified_user</span>
+        </div>
+        <h1>Verify Your Email</h1>
+        <p>We've sent a 6-digit OTP to<br><strong>{{ email }}</strong></p>
+        <p style="font-size: 13px; color: #9ca3af; margin-top: 8px;">(Check your console/terminal)</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Enter OTP</label>
+            <input type="text" name="otp" maxlength="6" required class="form-control otp-input" placeholder="000000" autofocus>
+            <p class="help-text" style="text-align: center;">Valid for 10 minutes</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <span class="material-symbols-outlined">check_circle</span>
+            Verify & Continue
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        <p>Didn't receive OTP? <a href="{% url 'resend_otp' %}">Resend</a></p>
+        <div class="role-links" style="margin-top: 12px;">
+            <a href="{% url 'register_user' %}">← Back to Registration</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

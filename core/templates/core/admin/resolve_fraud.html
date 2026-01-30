@@ -1,0 +1,92 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Resolve Fraud Flag{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1>Review Fraud Flag</h1>
+        <a href="{% url 'fraud_review' %}" class="btn btn-secondary" style="margin-top: 0.5rem;">← Back to List</a>
+    </div>
+
+    <div class="grid" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 5px solid {% if flag.risk_score >= 70 %}#f56565{% elif flag.risk_score >= 40 %}#ed8936{% else %}#48bb78{% endif %};">
+            <h3>🎯 Risk Assessment</h3>
+            <div style="text-align: center; margin: 1.5rem 0;">
+                <p style="font-size: 3rem; font-weight: bold; color: 
+                    {% if flag.risk_score >= 70 %}#f56565
+                    {% elif flag.risk_score >= 40 %}#ed8936
+                    {% else %}#48bb78{% endif %};">
+                    {{ flag.risk_score }}/100
+                </p>
+                <p>Risk Score</p>
+            </div>
+            {% if flag.variance_details %}
+            <div style="background: #f7fafc; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Variance Details:</strong>
+                <pre style="margin-top: 0.5rem; font-size: 0.85rem;">{{ flag.variance_details|pprint }}</pre>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>⚖️ Value Comparison</h3>
+            <div style="margin-top: 1rem; line-height: 2;">
+                <p><strong>AI Estimate:</strong> ₹{{ flag.product.system_value_estimate }}</p>
+                <p><strong>Vendor Declared:</strong> ₹{{ flag.product.final_value }}</p>
+                <p><strong>Difference:</strong> 
+                    ₹{{ flag.product.final_value|default:0|sub:flag.product.system_value_estimate|default:0|abs }}
+                </p>
+                <p><strong>Variance:</strong> {{ flag.risk_score }}%</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3>👤 Involved Parties</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Customer:</strong> {{ flag.product.customer.get_full_name }}</p>
+            <p><strong>Vendor:</strong> {{ flag.product.assigned_vendor.company_name }}</p>
+            <p><strong>Current Trust Score:</strong> {{ flag.product.assigned_vendor.rating }}/5.0</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📝 Resolution Decision</h3>
+        <form method="post" style="margin-top: 1.5rem;">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label><strong>Your Decision:</strong></label>
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #48bb78; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="decision" value="vendor_correct" required style="margin-right: 1rem;">
+                        <div>
+                            <strong style="color: #48bb78;">✅ Vendor is Correct</strong>
+                            <p style="margin: 0; color: #718096; font-size: 0.9rem;">AI estimation was inaccurate. Vendor's evaluation stands.</p>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #f56565; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="decision" value="vendor_fraud" style="margin-right: 1rem;">
+                        <div>
+                            <strong style="color: #f56565;">❌ Vendor Fraud Detected</strong>
+                            <p style="margin: 0; color: #718096; font-size: 0.9rem;">Vendor undervalued the product. Penalty will be applied.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label><strong>Resolution Notes:</strong></label>
+                <textarea name="notes" class="form-control" rows="4" placeholder="Explain your decision..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn" style="background: #667eea; padding: 12px 30px;">Submit Resolution</button>
+                <a href="{% url 'fraud_review' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

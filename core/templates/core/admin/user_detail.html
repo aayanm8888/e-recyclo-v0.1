@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ user_obj.get_full_name }} - User Details{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'user_list' %}" class="btn btn-secondary">← Back to Users</a>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>👤 Profile Information</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Name:</strong> {{ user_obj.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ user_obj.email }}</p>
+            <p><strong>Phone:</strong> {{ user_obj.phone }}</p>
+            <p><strong>Type:</strong> <span style="text-transform: capitalize;">{{ user_obj.user_type }}</span></p>
+            <p><strong>Joined:</strong> {{ user_obj.date_joined|date:"M d, Y" }}</p>
+            <p><strong>Status:</strong> {% if user_obj.is_active %}✅ Active{% else %}❌ Suspended{% endif %}</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>⚡ Quick Actions</h3>
+        <div style="margin-top: 1rem;">
+            <form method="post" action="{% url 'toggle_user_status' user_obj.id %}" style="margin-bottom: 1rem;">
+                {% csrf_token %}
+                {% if user_obj.is_active %}
+                <button type="submit" class="btn btn-danger" style="width: 100%;">🚫 Suspend User</button>
+                {% else %}
+                <button type="submit" class="btn btn-secondary" style="width: 100%; background: #48bb78;">✅ Activate User</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if role_data %}
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>📋 Role-Specific Information</h3>
+    <div style="margin-top: 1rem;">
+        {% if user_obj.user_type == 'vendor' %}
+        <p><strong>Company:</strong> {{ role_data.profile.company_name }}</p>
+        <p><strong>License:</strong> {{ role_data.profile.license_number }}</p>
+        <p><strong>Total Processed:</strong> {{ role_data.total_recycled }} items</p>
+        {% elif user_obj.user_type == 'collector' %}
+        <p><strong>Vehicle:</strong> {{ role_data.profile.vehicle_display }}</p>
+        <p><strong>Total Deliveries:</strong> {{ role_data.total_deliveries }}</p>
+        <p><strong>Rating:</strong> {{ role_data.rating }} ⭐</p>
+        {% elif user_obj.user_type == 'customer' %}
+        <p><strong>Products:</strong> {{ role_data.products }}</p>
+        <p><strong>Wallet:</strong> ₹{{ role_data.wallet_balance }}</p>
+        <p><strong>Loyalty Points:</strong> {{ role_data.loyalty_points }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'user_list' %}" class="btn">← Back to List</a>
+</div>
+{% endblock %}

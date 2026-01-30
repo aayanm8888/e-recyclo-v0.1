@@ -13,7 +13,7 @@ from .auth_views import (
 
 # User views
 from .user_views import (
-    user_dashboard_view,
+    user_dashboard,
     upload_product_view,
     my_products_view
 )

@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Verify Vendor - {{ vendor.company_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1>Vendor Verification</h1>
+        <p style="color: #718096;">Review and make final decision for {{ vendor.company_name }}</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem; border-left: 5px solid #ed8936;">
+        <h3>⚠️ Verification Checklist</h3>
+        <ul style="margin-top: 1rem; line-height: 2;">
+            <li>✓ License document is valid and clear</li>
+            <li>✓ License number matches document</li>
+            <li>✓ Company name is legitimate</li>
+            <li>✓ Processing capacity is realistic</li>
+            <li>✓ Specializations are appropriate</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>📝 Verification Decision</h3>
+        <form method="post" style="margin-top: 1.5rem;">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label><strong>Decision:</strong></label>
+                <div style="display: flex; gap: 2rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="action" value="approve" required style="margin-right: 0.5rem;">
+                        <span style="color: #48bb78; font-weight: bold;">✅ Approve</span>
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="action" value="reject" style="margin-right: 0.5rem;">
+                        <span style="color: #f56565; font-weight: bold;">❌ Reject</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label><strong>Notes (Optional):</strong></label>
+                <textarea name="notes" class="form-control" rows="4" placeholder="Add any notes about this verification decision..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn" style="background: #48bb78; padding: 12px 30px;">Submit Decision</button>
+                <a href="{% url 'vendor_detail' vendor.id %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

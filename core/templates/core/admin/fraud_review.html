@@ -1,0 +1,63 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Fraud Review - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>🚨 Fraud Detection Review</h1>
+    <p style="color: #718096;">Review flagged products with value discrepancies</p>
+</div>
+
+<div class="card">
+    {% if flags %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc; text-align: left;">
+                <th style="padding: 1rem;">Product</th>
+                <th style="padding: 1rem;">Risk Score</th>
+                <th style="padding: 1rem;">AI vs Vendor</th>
+                <th style="padding: 1rem;">Flagged</th>
+                <th style="padding: 1rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flag in flags %}
+            <tr style="border-bottom: 1px solid #e2e8f0; {% if flag.risk_score > 70 %}background: #fff5f5;{% endif %}">
+                <td style="padding: 1rem;">
+                    <strong>{{ flag.product.category }}</strong><br>
+                    <small>{{ flag.product.customer.email }}</small>
+                </td>
+                <td style="padding: 1rem;">
+                    <span style="font-size: 1.5rem; font-weight: bold; color: 
+                        {% if flag.risk_score >= 70 %}#f56565
+                        {% elif flag.risk_score >= 40 %}#ed8936
+                        {% else %}#48bb78{% endif %};">
+                        {{ flag.risk_score }}
+                    </span>
+                </td>
+                <td style="padding: 1rem;">
+                    <small>
+                        AI: ₹{{ flag.product.system_value_estimate }}<br>
+                        Vendor: ₹{{ flag.product.final_value }}
+                    </small>
+                </td>
+                <td style="padding: 1rem;">{{ flag.created_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'fraud_detail' flag.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Review</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 3rem;">
+        <p style="color: #48bb78; font-size: 1.5rem;">✅ All Clear!</p>
+        <p style="color: #718096;">No fraud flags pending review.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

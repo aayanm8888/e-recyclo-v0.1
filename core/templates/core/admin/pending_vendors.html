@@ -1,0 +1,56 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Pending Vendors - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Pending Vendor Verifications</h1>
+    <p style="color: #718096;">Review and approve vendor applications</p>
+</div>
+
+<div class="card">
+    {% if vendors %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc; text-align: left;">
+                <th style="padding: 1rem;">Company</th>
+                <th style="padding: 1rem;">License</th>
+                <th style="padding: 1rem;">Specializations</th>
+                <th style="padding: 1rem;">Applied</th>
+                <th style="padding: 1rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vendor in vendors %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">
+                    <strong>{{ vendor.company_name }}</strong><br>
+                    <small style="color: #718096;">{{ vendor.user.email }}</small>
+                </td>
+                <td style="padding: 1rem;">{{ vendor.license_number }}</td>
+                <td style="padding: 1rem;">
+                    {% for spec in vendor.specializations %}
+                        <span style="background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 15px; font-size: 0.8rem; margin-right: 0.5rem;">{{ spec }}</span>
+                    {% endfor %}
+                </td>
+                <td style="padding: 1rem;">{{ vendor.created_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'vendor_detail' vendor.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">View</a>
+                    <a href="{% url 'verify_vendor' vendor.id %}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #48bb78;">Verify</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 3rem;">
+        <p style="color: #718096; font-size: 1.2rem;">✅ No pending vendors</p>
+        <p>All vendor applications have been processed.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

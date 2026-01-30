@@ -49,6 +49,7 @@ class CollectorRegistrationForm(forms.ModelForm):
         })
     )
     driving_license_number = forms.CharField(
+        required=False, 
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., MH0120230001234'
@@ -129,7 +130,7 @@ class CollectorRegistrationForm(forms.ModelForm):
         return cleaned_data
     
     def save(self, commit=True):
-        # Create User
+        # Create User - ALWAYS save it first (collector needs a saved user)
         user_data = {
             'email': self.cleaned_data['email'],
             'phone': self.cleaned_data['phone'],
@@ -139,14 +140,12 @@ class CollectorRegistrationForm(forms.ModelForm):
         }
         user = User(**user_data)
         user.set_password(self.cleaned_data['password1'])
+        user.save()  # ← ALWAYS save user first!
         
-        if commit:
-            user.save()
-        
-        # Create Collector (not available until verified)
+        # Create Collector
         collector = super().save(commit=False)
         collector.user = user
-        collector.is_available = False  # Must be verified first
+        collector.is_available = False
         collector.verification_status = 'pending'
         
         if commit:

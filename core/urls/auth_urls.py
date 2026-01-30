@@ -1,5 +1,5 @@
 from django.urls import path
-from core.views import auth_views
+from core.views import auth_views, profile_views
 
 urlpatterns = [
     path('', auth_views.home_view, name='home'),
@@ -16,4 +16,17 @@ urlpatterns = [
     path('register/', auth_views.register_user_view, name='register_user'),
     path('register/vendor/', auth_views.register_vendor_view, name='register_vendor'),
     path('register/collector/', auth_views.register_collector_view, name='register_collector'),
+    
+    # Registration with OTP
+    path('register/', auth_views.register_user_view, name='register_user'),
+    path('verify-otp/', auth_views.verify_otp_view, name='verify_otp'),
+    path('resend-otp/', auth_views.resend_otp_view, name='resend_otp'),
+    
+    # Password Reset
+    path('password-reset/', profile_views.password_reset_request_view, name='password_reset'),
+    path('password-reset/verify/', profile_views.password_reset_verify_view, name='password_reset_verify'),
+    
+    # Profile Management
+    path('profile/', profile_views.user_profile_view, name='user_profile'),
+    path('profile/change-password/', profile_views.password_change_view, name='password_change'),
 ]

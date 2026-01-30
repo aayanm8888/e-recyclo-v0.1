@@ -8,10 +8,12 @@ def product_detail_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
     # Check permissions
-    if request.user != product.customer and \
-       request.user != product.assigned_vendor.user if product.assigned_vendor else True and \
-       request.user != product.assigned_collector.user if product.assigned_collector else True and \
-       not request.user.is_staff:
+    is_owner = request.user == product.customer
+    is_vendor = product.assigned_vendor and request.user == product.assigned_vendor.user
+    is_collector = product.assigned_collector and request.user == product.assigned_collector.user
+    is_admin = request.user.is_staff
+
+    if not (is_owner or is_vendor or is_collector or is_admin):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
     

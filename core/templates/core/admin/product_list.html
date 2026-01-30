@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Products - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Product Management</h1>
+    <p style="color: #718096;">View and manage all e-waste products</p>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom: 2rem;">
+    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Status</label>
+            <select name="status" class="form-control" style="width: 180px;">
+                <option value="all" {% if status == 'all' %}selected{% endif %}>All Status</option>
+                <option value="pending">Pending</option>
+                <option value="classified">Classified</option>
+                <option value="vendor_assigned">Vendor Assigned</option>
+                <option value="collector_assigned">Collector Assigned</option>
+                <option value="picked_up">Picked Up</option>
+                <option value="delivered">Delivered</option>
+                <option value="recycled">Recycled</option>
+                <option value="disputed">Disputed</option>
+            </select>
+        </div>
+        <button type="submit" class="btn" style="background: #667eea;">Filter</button>
+        <a href="{% url 'admin_product_list' %}" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    {% if products %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc; text-align: left;">
+                <th style="padding: 1rem;">ID</th>
+                <th style="padding: 1rem;">Category</th>
+                <th style="padding: 1rem;">Customer</th>
+                <th style="padding: 1rem;">Status</th>
+                <th style="padding: 1rem;">Date</th>
+                <th style="padding: 1rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem; font-family: monospace;">{{ product.id|truncatechars:8 }}</td>
+                <td style="padding: 1rem;">{{ product.category|default:"Uncategorized" }}</td>
+                <td style="padding: 1rem;">
+                    <small>{{ product.customer.email }}</small>
+                </td>
+                <td style="padding: 1rem;">
+                    <span style="background: 
+                        {% if product.status == 'recycled' %}#c6f6d5
+                        {% elif product.status == 'pending' %}#fefcbf
+                        {% elif product.status == 'disputed' %}#fed7d7
+                        {% else %}#e2e8f0{% endif %}; 
+                        padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem;">
+                        {{ product.get_status_display }}
+                    </span>
+                </td>
+                <td style="padding: 1rem;">{{ product.uploaded_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'product_detail' product.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">View</a>
+                    {% if product.status == 'vendor_assigned' and not product.assigned_collector %}
+                    <a href="{% url 'assign_collector' product.id %}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #667eea;">Assign Collector</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 2rem; color: #718096;">No products found.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

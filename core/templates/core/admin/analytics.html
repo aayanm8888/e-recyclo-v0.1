@@ -1,0 +1,92 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Analytics - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>📊 Analytics & Reports</h1>
+    <p style="color: #718096;">Platform performance and insights</p>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>📦 Products by Status</h3>
+        <div style="margin-top: 1rem;">
+            {% for status in products_by_status %}
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                <span>{{ status.status|title }}</span>
+                <strong>{{ status.count }}</strong>
+            </div>
+            {% empty %}
+            <p style="color: #718096;">No data available</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>💰 Revenue by Category</h3>
+        <div style="margin-top: 1rem;">
+            {% for cat in revenue_by_category %}
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                <span>{{ cat.category|default:"Uncategorized"|title }}</span>
+                <div style="text-align: right;">
+                    <strong>₹{{ cat.total_value|default:0 }}</strong><br>
+                    <small style="color: #718096;">{{ cat.count }} items</small>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: #718096;">No revenue data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>🏆 Top Vendors</h3>
+        <table style="width: 100%; margin-top: 1rem;">
+            <tbody>
+                {% for vendor in top_vendors %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 0.75rem 0;">
+                        <strong>{{ vendor.company_name }}</strong><br>
+                        <small style="color: #718096;">Rating: {{ vendor.rating }} ⭐</small>
+                    </td>
+                    <td style="text-align: right; padding: 0.75rem 0;">
+                        <strong>{{ vendor.total_recycled }}</strong> items
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" style="color: #718096;">No vendor data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h3>🚚 Top Collectors</h3>
+        <table style="width: 100%; margin-top: 1rem;">
+            <tbody>
+                {% for collector in top_collectors %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 0.75rem 0;">
+                        <strong>{{ collector.user.get_full_name }}</strong><br>
+                        <small style="color: #718096;">{{ collector.vehicle_type|title }}</small>
+                    </td>
+                    <td style="text-align: right; padding: 0.75rem 0;">
+                        <strong>{{ collector.total_deliveries }}</strong> deliveries<br>
+                        <small style="color: #718096;">{{ collector.rating }} ⭐</small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" style="color: #718096;">No collector data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

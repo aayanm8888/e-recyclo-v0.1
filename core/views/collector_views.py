@@ -52,6 +52,11 @@ def mark_picked_up_view(request, product_id):
     
     product.status = 'picked_up'
     product.picked_up_at = timezone.now()
+    
+    # Set assigned_at if not already set
+    if not product.assigned_at:
+        product.assigned_at = timezone.now()
+    
     product.save()
     
     messages.success(request, f'Picked up {product.category} from customer.')
@@ -75,7 +80,8 @@ def mark_delivered_view(request, product_id):
     
     # Update collector stats
     collector = request.user.collector_profile
-    collector.current_pickups -= 1
+    if collector.current_pickups > 0:
+        collector.current_pickups -= 1
     collector.total_deliveries += 1
     collector.save()
     

@@ -1,0 +1,71 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ vendor.company_name }} - Vendor Details{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Vendor Details</h1>
+    <a href="{% url 'pending_vendors' %}" class="btn btn-secondary" style="margin-top: 0.5rem;">← Back to List</a>
+</div>
+
+<div class="grid" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>🏢 Company Information</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Company:</strong> {{ vendor.company_name }}</p>
+            <p><strong>License:</strong> {{ vendor.license_number }}</p>
+            <p><strong>GST:</strong> {{ vendor.gst_number|default:"Not provided" }}</p>
+            <p><strong>Status:</strong> 
+                <span style="background: {% if vendor.verification_status == 'approved' %}#c6f6d5{% elif vendor.verification_status == 'rejected' %}#fed7d7{% else %}#fefcbf{% endif %}; 
+                             padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.9rem;">
+                    {{ vendor.get_verification_status_display }}
+                </span>
+            </p>
+            <p><strong>Applied:</strong> {{ vendor.created_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>👤 Contact Person</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>Name:</strong> {{ vendor.user.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ vendor.user.email }}</p>
+            <p><strong>Phone:</strong> {{ vendor.user.phone }}</p>
+            <p><strong>Trust Score:</strong> {{ vendor.trust_score }}/100</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>📄 License Document</h3>
+    {% if vendor.license_document %}
+        <div style="margin-top: 1rem;">
+            <a href="{{ vendor.license_document.url }}" target="_blank" class="btn btn-secondary">View License Document</a>
+            <p style="margin-top: 0.5rem; color: #718096;">Uploaded: {{ vendor.license_document.name }}</p>
+        </div>
+    {% else %}
+        <p style="color: #e53e3e;">⚠️ No license document uploaded</p>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>⚙️ Capabilities</h3>
+    <div style="margin-top: 1rem;">
+        <p><strong>Processing Capacity:</strong> {{ vendor.processing_capacity }} kg/day</p>
+        <p><strong>Current Workload:</strong> {{ vendor.workload_percentage|floatformat:1 }}%</p>
+        <p><strong>Specializations:</strong></p>
+        <div style="margin-top: 0.5rem;">
+            {% for spec in vendor.specializations %}
+                <span style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.9rem; margin-right: 0.5rem;">{{ spec }}</span>
+            {% empty %}
+                <span style="color: #718096;">No specializations listed</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div style="display: flex; gap: 1rem;">
+    <a href="{% url 'verify_vendor' vendor.id %}" class="btn" style="background: #48bb78;">✅ Proceed to Verification</a>
+    <a href="{% url 'pending_vendors' %}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

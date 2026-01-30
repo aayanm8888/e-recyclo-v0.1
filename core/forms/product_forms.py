@@ -1,38 +1,48 @@
 from django import forms
-from core.models import Product
+from core.models.product import Product
 
 class ProductUploadForm(forms.ModelForm):
-    image = forms.ImageField(
-        widget=forms.FileInput(attrs={
+    """Form for uploading e-waste products with location"""
+    # Manual location text field
+    pickup_location_text = forms.CharField(
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'accept': 'image/*',
-            'capture': 'environment'  # For mobile camera
-        })
+            'placeholder': 'Enter complete address (e.g., 123 Main St, Mumbai)',
+            'id': 'pickup-location-text'
+        }),
+        label='Pickup Address'
     )
-    address = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'placeholder': 'Pickup address',
-            'rows': 3
-        })
-    )
+    
+    # Hidden lat-long fields (auto-filled by geolocation)
     latitude = forms.DecimalField(
-        widget=forms.HiddenInput(),
-        required=False
+        max_digits=10, decimal_places=8,
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'latitude-field'})
     )
     longitude = forms.DecimalField(
-        widget=forms.HiddenInput(),
-        required=False
+        max_digits=11, decimal_places=8,
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'longitude-field'})
     )
     
     class Meta:
         model = Product
-        fields = ['image', 'address', 'latitude', 'longitude']
-    
-    def save(self, customer, commit=True):
-        product = super().save(commit=False)
-        product.customer = customer
-        product.status = 'pending'
-        if commit:
-            product.save()
-        return product
+        fields = ['name', 'description', 'weight_approx', 'product_image']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Enter product name (e.g., Old Refrigerator, Laptop)'
+            }),
+            
+            'weight_approx': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Approximate weight in kg'
+            }),
+            'product_image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+                'id': 'product-image'
+            })
+        }

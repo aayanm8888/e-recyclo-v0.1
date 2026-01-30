@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Pending Collectors - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Pending Collector Verifications</h1>
+    <p style="color: #718096;">Review and approve collector applications</p>
+</div>
+
+<div class="card">
+    {% if collectors %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc; text-align: left;">
+                <th style="padding: 1rem;">Name</th>
+                <th style="padding: 1rem;">Vehicle</th>
+                <th style="padding: 1rem;">Documents</th>
+                <th style="padding: 1rem;">Applied</th>
+                <th style="padding: 1rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for collector in collectors %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">
+                    <strong>{{ collector.user.get_full_name }}</strong><br>
+                    <small style="color: #718096;">{{ collector.user.email }}</small>
+                </td>
+                <td style="padding: 1rem;">
+                    {{ collector.vehicle_display }}<br>
+                    <small>{{ collector.vehicle_number|default:"No number" }}</small>
+                </td>
+                <td style="padding: 1rem;">
+                    {% if collector.is_documentation_complete %}
+                        <span style="color: #48bb78;">✅ Complete</span>
+                    {% else %}
+                        <span style="color: #ed8936;">⚠️ Incomplete</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem;">{{ collector.created_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'collector_detail' collector.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">View</a>
+                    <a href="{% url 'verify_collector' collector.id %}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #667eea;">Verify</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 3rem;">
+        <p style="color: #718096; font-size: 1.2rem;">✅ No pending collectors</p>
+        <p>All collector applications have been processed.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -1,8 +1,16 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth import get_user_model  # ← USE THIS
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.cache import cache
+from datetime import datetime
+
 from core.forms import LoginForm, UserRegistrationForm, VendorRegistrationForm, CollectorRegistrationForm
+from core.utils import generate_otp, send_otp_console, store_otp, verify_stored_otp
+
+# Get User model
+User = get_user_model()
 
 def home_view(request):
     """Landing page"""
@@ -129,25 +137,30 @@ def logout_view(request):
 # ============== REGISTRATION VIEWS (ADD THESE BACK!) ==============
 
 def register_user_view(request):
-    """Customer registration with debug messages"""
+    """Customer registration with OTP verification"""
+    if request.user.is_authenticated:
+        return redirect('user_dashboard')
+    
     if request.method == 'POST':
-        print("POST data:", request.POST)  # Debug
         form = UserRegistrationForm(request.POST)
         
         if form.is_valid():
-            print("Form is valid")  # Debug
-            try:
-                user = form.save()
-                print(f"User created: {user.email}")  # Debug
-                login(request, user)
-                messages.success(request, 'Registration successful! Welcome to E-RECYCLO.')
-                return redirect('user_dashboard')
-            except Exception as e:
-                print(f"Error saving: {e}")  # Debug
-                messages.error(request, f'Error: {e}')
+            # Store data in session (convert date to string for JSON serialization)
+            cleaned_data = form.cleaned_data.copy()
+            if cleaned_data.get('date_of_birth'):
+                cleaned_data['date_of_birth'] = cleaned_data['date_of_birth'].isoformat()
+            
+            request.session['reg_data'] = cleaned_data
+            request.session['reg_email'] = cleaned_data['email']
+            
+            # Generate and send OTP
+            otp = generate_otp()
+            store_otp(cleaned_data['email'], otp, timeout=600)
+            send_otp_console(cleaned_data['email'], otp, "registration")
+            
+            messages.info(request, f'OTP sent to {cleaned_data["email"]}. Please check your console/terminal.')
+            return redirect('verify_otp')
         else:
-            print("Form errors:", form.errors)  # Debug
-            # Show specific errors
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -155,6 +168,73 @@ def register_user_view(request):
         form = UserRegistrationForm()
     
     return render(request, 'core/auth/register_user.html', {'form': form})
+
+def verify_otp_view(request):
+    """Verify OTP and create user"""
+    from django.contrib.auth import get_user_model
+    
+    if 'reg_data' not in request.session:
+        messages.error(request, 'Session expired. Please register again.')
+        return redirect('register_user')
+    
+    reg_data = request.session['reg_data']
+    email = reg_data.get('email')
+    
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '')
+        
+        if verify_stored_otp(email, entered_otp):
+            # Create user
+            try:
+                
+                # Convert date string back to date object
+                dob = None
+                if reg_data.get('date_of_birth'):
+                    from datetime import datetime
+                    dob = datetime.fromisoformat(reg_data['date_of_birth']).date()
+                
+                user = User(
+                    email=reg_data['email'],
+                    phone=reg_data['phone'],
+                    first_name=reg_data['first_name'],
+                    last_name=reg_data['last_name'],
+                    user_type='customer',
+                    date_of_birth=dob,
+                    is_active=True
+                )
+                user.set_password(reg_data['password1'])
+                user.save()
+                
+                # Clear session
+                del request.session['reg_data']
+                if 'reg_email' in request.session:
+                    del request.session['reg_email']
+                
+                # Auto login
+                login(request, user)
+                messages.success(request, 'Registration successful! Please complete your profile.')
+                return redirect('user_profile')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating account: {str(e)}')
+        else:
+            messages.error(request, 'Invalid or expired OTP. Please try again.')
+    
+    return render(request, 'core/auth/verify_otp.html', {'email': email})
+
+def resend_otp_view(request):
+    """Resend OTP"""
+    if 'reg_email' not in request.session:
+        messages.error(request, 'Session expired.')
+        return redirect('register_user')
+    
+    email = request.session['reg_email']
+    otp = generate_otp()
+    store_otp(email, otp, timeout=600)
+    send_otp_console(email, otp, "registration")
+    
+    messages.info(request, 'New OTP sent. Please check console.')
+    return redirect('verify_otp')
 
 def register_vendor_view(request):
     """Vendor registration"""
@@ -173,12 +253,31 @@ def register_vendor_view(request):
 def register_collector_view(request):
     """Collector registration"""
     if request.method == 'POST':
-        form = CollectorRegistrationForm(request.POST)
+        form = CollectorRegistrationForm(request.POST, request.FILES)  # ← MUST have request.FILES!
+        
         if form.is_valid():
-            collector = form.save()
-            login(request, collector.user)
-            messages.success(request, 'Collector registration successful! You can start accepting pickups.')
-            return redirect('collector_dashboard')
+            try:
+                collector = form.save(commit=False)
+                
+                # Handle file uploads explicitly
+                if 'profile_photo' in request.FILES:
+                    collector.profile_photo = request.FILES['profile_photo']
+                if 'driving_license_front' in request.FILES:
+                    collector.driving_license_front = request.FILES['driving_license_front']
+                if 'driving_license_back' in request.FILES:
+                    collector.driving_license_back = request.FILES['driving_license_back']
+                
+                collector.save()
+                login(request, collector.user)
+                messages.success(request, 'Collector registration successful! You can start accepting pickups.')
+                return redirect('collector_dashboard')
+            except Exception as e:
+                messages.error(request, f'Registration failed: {e}')
+        else:
+            # Show form errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = CollectorRegistrationForm()
     

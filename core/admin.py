@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.utils import timezone
 from core.models import User, Vendor, Collector, Product, FraudFlag
+from core.models import User, Vendor, Collector, Product, FraudFlag, PickupRequest
 
 # ============================================
 # CUSTOM FILTERS
@@ -842,41 +843,183 @@ class CollectorAdmin(admin.ModelAdmin):
 
 
 # ============================================
-# PRODUCT ADMIN
+# PRODUCT ADMIN (UPDATED)
 # ============================================
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['id_short', 'category', 'get_customer', 'status_badge', 'assigned_vendor', 'uploaded_at']
-    list_filter = ['status', 'category', 'uploaded_at']
-    search_fields = ['customer__email', 'category', 'id']
-    readonly_fields = ['uploaded_at', 'picked_up_at', 'delivered_at', 'completed_at']
-    raw_id_fields = ['customer', 'assigned_vendor', 'assigned_collector']
-    date_hierarchy = 'uploaded_at'
+    list_display = ['id_short', 'name', 'category', 'get_seller', 'status_badge', 'created_at']
+    list_filter = ['status', 'category', 'created_at']
+    search_fields = ['name', 'description', 'seller__email', 'seller__first_name', 'seller__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+    raw_id_fields = ['seller', 'category']
+    date_hierarchy = 'created_at'
     
     def id_short(self, obj):
-        return str(obj.id)[:8]
+        return f"#{obj.id}"
     id_short.short_description = 'ID'
     
-    def get_customer(self, obj):
-        return obj.customer.email if obj.customer else '-'
-    get_customer.short_description = 'Customer'
+    def get_seller(self, obj):
+        if obj.seller:
+            return format_html(
+                '<strong>{}</strong><br><small>{}</small>',
+                obj.seller.get_full_name() or obj.seller.username,
+                obj.seller.email
+            )
+        return '-'
+    get_seller.short_description = 'Seller'
+    get_seller.admin_order_field = 'seller__email'
     
     def status_badge(self, obj):
         colors = {
-            'pending': '#718096',
-            'classified': '#4299e1',
-            'vendor_assigned': '#ed8936',
-            'collector_assigned': '#805ad5',
-            'picked_up': '#667eea',
-            'delivered': '#38b2ac',
-            'recycled': '#48bb78',
-            'disputed': '#f56565'
+            'available': '#48bb78',      # green
+            'pending': '#ecc94b',        # yellow
+            'picked': '#ed8936',         # orange
+            'recycled': '#4299e1',       # blue
         }
         color = colors.get(obj.status, 'gray')
-        return format_html('<span style="background: {}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{}</span>', 
-                          color, obj.get_status_display())
+        return format_html(
+            '<span style="background: {}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{}</span>', 
+            color, obj.get_status_display()
+        )
     status_badge.short_description = 'Status'
+
+
+# ============================================
+# PICKUP REQUEST ADMIN (NEW - ADD THIS)
+# ============================================
+
+@admin.register(PickupRequest)
+class PickupRequestAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 
+        'get_product_name', 
+        'get_seller', 
+        'get_collector', 
+        'status_badge',
+        'has_coordinates',
+        'created_at'
+    ]
+    list_filter = ['status', 'created_at']
+    search_fields = [
+        'product__name', 
+        'seller__email', 
+        'seller__first_name',
+        'collector__email',
+        'pickup_location_text'
+    ]
+    raw_id_fields = ['product', 'seller', 'collector']
+    date_hierarchy = 'created_at'
+    readonly_fields = [
+        'created_at', 
+        'updated_at', 
+        'assigned_at', 
+        'completed_at',
+        'location_map_preview'
+    ]
+    
+    fieldsets = (
+        ('Product & Status', {
+            'fields': ('product', 'status', 'created_at', 'updated_at')
+        }),
+        ('Seller Information', {
+            'fields': ('seller',),
+        }),
+        ('Collector Assignment', {
+            'fields': ('collector', 'assigned_at'),
+        }),
+        ('Pickup Location', {
+            'fields': ('pickup_location_text', 'latitude', 'longitude', 'location_map_preview'),
+            'description': 'Location details with GPS coordinates'
+        }),
+        ('Completion Details', {
+            'fields': ('completed_at',),
+            'classes': ('collapse',),
+        }),
+        ('Notes', {
+            'fields': ('seller_notes', 'collector_notes'),
+            'classes': ('collapse',),
+        }),
+    )
+    
+    def get_product_name(self, obj):
+        return obj.product.name if obj.product else '-'
+    get_product_name.short_description = 'Product'
+    
+    def get_seller(self, obj):
+        if obj.seller:
+            return format_html(
+                '{}<br><small>{}</small>',
+                obj.seller.get_full_name() or obj.seller.username,
+                obj.seller.email
+            )
+        return '-'
+    get_seller.short_description = 'Seller'
+    
+    def get_collector(self, obj):
+        if obj.collector:
+            return format_html(
+                '{}<br><small>{}</small>',
+                obj.collector.get_full_name() or obj.collector.username,
+                obj.collector.email
+            )
+        return format_html('<span style="color: #a0aec0;">Not assigned</span>')
+    get_collector.short_description = 'Collector'
+    
+    def status_badge(self, obj):
+        colors = {
+            'pending': ('#ecc94b', '⏳'),
+            'assigned': ('#4299e1', '🚚'),
+            'in_transit': ('#ed8936', '📦'),
+            'completed': ('#48bb78', '✅'),
+            'cancelled': ('#f56565', '❌'),
+        }
+        color, icon = colors.get(obj.status, ('gray', ''))
+        return format_html(
+            '<span style="background: {}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{} {}</span>',
+            color, icon, obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'
+    
+    def has_coordinates(self, obj):
+        if obj.latitude and obj.longitude:
+            return format_html('<span style="color: #48bb78;">✓ GPS</span>')
+        return format_html('<span style="color: #a0aec0;">✗ Manual</span>')
+    has_coordinates.short_description = 'Location Type'
+    
+    def location_map_preview(self, obj):
+        if obj.latitude and obj.longitude:
+            map_url = f"https://www.google.com/maps?q={obj.latitude},{obj.longitude}"
+            return format_html(
+                '<div style="margin-top: 10px;">'
+                '<p><strong>Coordinates:</strong> {}, {}</p>'
+                '<a href="{}" target="_blank" style="display: inline-block; background: #48bb78; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">'
+                '🗺️ View on Google Maps'
+                '</a>'
+                '</div>',
+                obj.latitude, obj.longitude, map_url
+            )
+        return format_html('<p style="color: #a0aec0;">No GPS coordinates available</p>')
+    location_map_preview.short_description = 'Map View'
+    
+    actions = ['mark_assigned', 'mark_completed', 'mark_cancelled']
+    
+    def mark_assigned(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(status='assigned', assigned_at=timezone.now())
+        messages.success(request, f'✅ Marked {queryset.count()} pickup(s) as assigned.')
+    mark_assigned.short_description = "✅ Mark as Assigned"
+    
+    def mark_completed(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(status='completed', completed_at=timezone.now())
+        messages.success(request, f'✅ Marked {queryset.count()} pickup(s) as completed.')
+    mark_completed.short_description = "✅ Mark as Completed"
+    
+    def mark_cancelled(self, request, queryset):
+        queryset.update(status='cancelled', collector=None)
+        messages.warning(request, f'❌ Cancelled {queryset.count()} pickup(s).')
+    mark_cancelled.short_description = "❌ Cancelled"
 
 # ============================================
 # FRAUD FLAG ADMIN
@@ -892,11 +1035,18 @@ class FraudFlagAdmin(admin.ModelAdmin):
         return str(obj.product.id)[:8] if obj.product else '-'
     product_id_short.short_description = 'Product'
     
+    # In FraudFlagAdmin, replace the get_vendor method:
+
     def get_vendor(self, obj):
-        if obj.product and obj.product.assigned_vendor:
-            return obj.product.assigned_vendor.company_name
+        # Vendor is now accessed through PickupRequest -> Product
+        if obj.product:
+            pickup = getattr(obj.product, 'pickuprequest', None)
+            if pickup and pickup.collector:
+                # If you want to show vendor info, you might need to adjust this logic
+                # based on your actual FraudFlag model structure
+                return f"Pickup #{pickup.id}"
         return '-'
-    get_vendor.short_description = 'Vendor'
+    get_vendor.short_description = 'Pickup'
     
     def risk_score_bar(self, obj):
         score = obj.risk_score or 0

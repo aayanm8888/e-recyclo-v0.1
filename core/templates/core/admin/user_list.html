@@ -1,0 +1,91 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Users - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>User Management</h1>
+    <p style="color: #718096;">View and manage all users</p>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom: 2rem;">
+    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>User Type</label>
+            <select name="type" class="form-control" style="width: 150px;">
+                <option value="all" {% if user_type == 'all' %}selected{% endif %}>All Users</option>
+                <option value="customer" {% if user_type == 'customer' %}selected{% endif %}>Customers</option>
+                <option value="vendor" {% if user_type == 'vendor' %}selected{% endif %}>Vendors</option>
+                <option value="collector" {% if user_type == 'collector' %}selected{% endif %}>Collectors</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Search</label>
+            <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Name, email, phone..." style="width: 250px;">
+        </div>
+        <button type="submit" class="btn" style="background: #667eea;">Filter</button>
+        <a href="{% url 'user_list' %}" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p><strong>Total:</strong> {{ total_count }} users</p>
+    </div>
+    
+    {% if users %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f7fafc; text-align: left;">
+                <th style="padding: 1rem;">Name</th>
+                <th style="padding: 1rem;">Type</th>
+                <th style="padding: 1rem;">Contact</th>
+                <th style="padding: 1rem;">Joined</th>
+                <th style="padding: 1rem;">Status</th>
+                <th style="padding: 1rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">
+                    <strong>{{ user.get_full_name }}</strong>
+                </td>
+                <td style="padding: 1rem;">
+                    <span style="background: 
+                        {% if user.user_type == 'customer' %}#667eea
+                        {% elif user.user_type == 'vendor' %}#48bb78
+                        {% elif user.user_type == 'collector' %}#ed8936
+                        {% else %}#718096{% endif %}; 
+                        color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem;">
+                        {{ user.user_type|title }}
+                    </span>
+                </td>
+                <td style="padding: 1rem;">
+                    <small>{{ user.email }}<br>{{ user.phone }}</small>
+                </td>
+                <td style="padding: 1rem;">{{ user.date_joined|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">
+                    {% if user.is_active %}
+                        <span style="color: #48bb78;">✅ Active</span>
+                    {% else %}
+                        <span style="color: #f56565;">❌ Suspended</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'user_detail' user.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 2rem; color: #718096;">No users found matching your criteria.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}
